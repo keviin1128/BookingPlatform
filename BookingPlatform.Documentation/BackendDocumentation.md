@@ -283,9 +283,9 @@ Uso de `appsettings.json` con Options Pattern:
 
 ## Testing
 
-Unit Tests (xUnit)
-Integration Tests
-Mocking (Moq)
+- Unit Tests (xUnit)
+- Integration Tests
+- Mocking (Moq)
 
 ## Buenas Prácticas Adoptadas
 - Uso de GUID como PK
