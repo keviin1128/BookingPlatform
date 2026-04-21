@@ -3,6 +3,6 @@
 public enum Role
 {
     Admin,
-    Staff,
-    Client
+    Worker,
+    Customer
 }

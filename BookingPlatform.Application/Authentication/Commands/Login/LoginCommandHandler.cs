@@ -1,6 +1,8 @@
 ﻿using BookingPlatform.Application.Authentication.DTOs;
 using BookingPlatform.Application.Authentication.Interfaces;
 using BookingPlatform.Application.Common.Interfaces;
+using BookingPlatform.Application.Common.Utilities;
+using FluentValidation;
 using MediatR;
 
 namespace BookingPlatform.Application.Authentication.Commands.Login;
@@ -8,39 +10,33 @@ namespace BookingPlatform.Application.Authentication.Commands.Login;
 public class LoginCommandHandler : IRequestHandler<LoginCommand, AuthResponseDto>
 {
     private readonly IUserRepository _userRepository;
-    private readonly IPasswordHasher _passwordHasher;
     private readonly IJwtTokenGenerator _jwtTokenGenerator;
+    private readonly IValidator<LoginCommand> _validator;
 
     public LoginCommandHandler(
         IUserRepository userRepository,
-        IPasswordHasher passwordHasher,
-        IJwtTokenGenerator jwtTokenGenerator)
+        IJwtTokenGenerator jwtTokenGenerator,
+        IValidator<LoginCommand> validator)
     {
         _userRepository = userRepository;
-        _passwordHasher = passwordHasher;
         _jwtTokenGenerator = jwtTokenGenerator;
+        _validator = validator;
     }
 
     public async Task<AuthResponseDto> Handle(LoginCommand command, CancellationToken cancellationToken)
     {
-        var user = await _userRepository.GetByEmailAsync(command.Email);
+        await _validator.ValidateAndThrowAsync(command, cancellationToken);
+
+        var normalizedPhone = PhoneNumberNormalizer.Normalize(command.Telefono);
+        var user = await _userRepository.GetByPhoneAsync(normalizedPhone, cancellationToken);
 
         if (user is null)
-            throw new Exception("Credenciales incorrectas");
-
-        var isPasswordValid = _passwordHasher.Verify(command.Password, user.PasswordHash);
-
-        if (!isPasswordValid)
-            throw new Exception("Credenciales incorrectas");
+        {
+            throw new UnauthorizedAccessException("Credenciales incorrectas.");
+        }
 
         var token = _jwtTokenGenerator.GenerateToken(user);
 
-        return new AuthResponseDto(
-            user.Id,
-            user.FirstName,
-            user.LastName,
-            user.Email,
-            token
-        );
+        return new AuthResponseDto(token, BookingPlatform.Application.Common.DTOs.UserDto.FromDomain(user));
     }
 }

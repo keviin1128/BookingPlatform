@@ -1,9 +1,8 @@
-﻿namespace BookingPlatform.Application.Authentication.DTOs;
+﻿using BookingPlatform.Application.Common.DTOs;
+
+namespace BookingPlatform.Application.Authentication.DTOs;
 
 public record AuthResponseDto(
-    Guid Id,
-    string FirstName,
-    string LastName,
-    string Email,
-    string Token
+    string Token,
+    UserDto User
 );
